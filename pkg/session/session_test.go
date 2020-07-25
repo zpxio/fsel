@@ -14,31 +14,24 @@
  * limitations under the License.
  */
 
-package main
+package session
 
 import (
-	"fmt"
-	"github.com/apex/log"
-	"github.com/zpxio/fsel/pkg/dir"
-	"github.com/zpxio/fsel/pkg/session"
-	"os"
+	"github.com/stretchr/testify/suite"
+	"testing"
 )
 
-func main() {
-	log.Infof("Starting up.")
+type SessionSuite struct {
+	suite.Suite
+}
 
-	log.Debugf("Creating Session")
-	s := session.NewSession()
+func TestSessionSuite(t *testing.T) {
+	suite.Run(t, new(SessionSuite))
+}
 
-	cwd, _ := os.Getwd()
-	log.Infof("Reading directory: %s", cwd)
-	r := dir.CreateReader(cwd, s)
-	err := r.Read()
-	if err != nil {
-		log.Errorf("Error adding files: %s", err)
-	}
+func (s *SessionSuite) TestNewSession() {
+	x := NewSession()
 
-	for f := range s.Files {
-		fmt.Println(f)
-	}
+	s.NotNil(x)
+	s.Empty(x.Files)
 }

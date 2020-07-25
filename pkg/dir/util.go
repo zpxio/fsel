@@ -14,31 +14,36 @@
  * limitations under the License.
  */
 
-package main
+package dir
 
 import (
-	"fmt"
-	"github.com/apex/log"
-	"github.com/zpxio/fsel/pkg/dir"
-	"github.com/zpxio/fsel/pkg/session"
 	"os"
+	"path/filepath"
 )
 
-func main() {
-	log.Infof("Starting up.")
+func FileExists(path string) bool {
+	_, err := os.Stat(path)
 
-	log.Debugf("Creating Session")
-	s := session.NewSession()
-
-	cwd, _ := os.Getwd()
-	log.Infof("Reading directory: %s", cwd)
-	r := dir.CreateReader(cwd, s)
-	err := r.Read()
-	if err != nil {
-		log.Errorf("Error adding files: %s", err)
+	if os.IsNotExist(err) {
+		return false
 	}
 
-	for f := range s.Files {
-		fmt.Println(f)
+	return true
+}
+
+func DepthFrom(base string, target string) int {
+	depth := 0
+
+	base = filepath.Clean(base)
+	target = filepath.Clean(target)
+
+	for target != base {
+		if target == "/" {
+			return -1
+		}
+		target = filepath.Dir(target)
+		depth += 1
 	}
+
+	return depth
 }

@@ -14,31 +14,24 @@
  * limitations under the License.
  */
 
-package main
+package session
 
 import (
-	"fmt"
-	"github.com/apex/log"
-	"github.com/zpxio/fsel/pkg/dir"
-	"github.com/zpxio/fsel/pkg/session"
 	"os"
 )
 
-func main() {
-	log.Infof("Starting up.")
+type Session struct {
+	Files map[string]os.FileInfo
+}
 
-	log.Debugf("Creating Session")
-	s := session.NewSession()
-
-	cwd, _ := os.Getwd()
-	log.Infof("Reading directory: %s", cwd)
-	r := dir.CreateReader(cwd, s)
-	err := r.Read()
-	if err != nil {
-		log.Errorf("Error adding files: %s", err)
+func NewSession() *Session {
+	s := Session{
+		Files: make(map[string]os.FileInfo),
 	}
 
-	for f := range s.Files {
-		fmt.Println(f)
-	}
+	return &s
+}
+
+func (s *Session) Add(item Item) {
+	s.Files[item.Path] = item.Info
 }
