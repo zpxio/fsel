@@ -18,6 +18,8 @@ package dir
 
 import (
 	"github.com/stretchr/testify/suite"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -63,4 +65,29 @@ func (s *DirSuite) TestDepthFrom_Dirty() {
 	s.Equal(1, DepthFrom(base, "/tmp/stuff/"))
 	s.Equal(1, DepthFrom(base, "/tmp/stuff"))
 	s.Equal(2, DepthFrom(base, "/tmp/stuff//things"))
+}
+
+func (s *DirSuite) TestFileExists_Positive() {
+	s.True(FileExists("/"))
+}
+
+func (s *DirSuite) TestFileExists_TempFile() {
+
+	f, ferr := ioutil.TempFile("", "fset-util-test-*.utest")
+	s.Require().NoError(ferr)
+	defer func() {
+		f.Close()
+		//log.Infof("Removing %s", f.Name())
+		os.Remove(f.Name())
+	}()
+
+	f.Write([]byte("Test String"))
+	f.Sync()
+	//log.Infof("Testing existence of temp file: %s", f.Name())
+
+	s.True(FileExists(f.Name()))
+}
+
+func (s *DirSuite) TestFileExists_Negative() {
+	s.False(FileExists("/you/really/hope/this/doesnt-exist-848nsingihs898098ghsh8g8hsugks.txt"))
 }

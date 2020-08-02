@@ -18,6 +18,7 @@ package session
 
 import (
 	"github.com/stretchr/testify/suite"
+	"os"
 	"testing"
 )
 
@@ -34,4 +35,49 @@ func (s *SessionSuite) TestNewSession() {
 
 	s.NotNil(x)
 	s.Empty(x.Files)
+}
+
+func (s *SessionSuite) TestAdd() {
+	x := NewSession()
+	s.Require().Empty(x.Files)
+
+	info, _ := os.Stat("/")
+
+	i1 := Item{
+		Path: "/path/a",
+		Info: info,
+	}
+
+	x.Add(i1)
+	s.Len(x.Files, 1)
+
+	i2 := Item{
+		Path: "/path/b",
+		Info: info,
+	}
+
+	x.Add(i2)
+	s.Len(x.Files, 2)
+}
+
+func (s *SessionSuite) TestAdd_Duplicate() {
+	x := NewSession()
+	s.Require().Empty(x.Files)
+	info, _ := os.Stat("/")
+
+	i2 := Item{
+		Path: "/path/b",
+		Info: info,
+	}
+
+	x.Add(i2)
+	s.Require().Len(x.Files, 1)
+
+	i3 := Item{
+		Path: "/path/b",
+		Info: info,
+	}
+
+	x.Add(i3)
+	s.Len(x.Files, 1)
 }
