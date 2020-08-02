@@ -22,12 +22,14 @@ import (
 	"github.com/zpxio/fsel/pkg/session"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type Reader struct {
 	dir           string
 	maxDepth      int
 	activeSession *session.Session
+	filterChannel chan session.Item
 }
 
 func CreateReader(dir string, s *session.Session) *Reader {
@@ -46,7 +48,31 @@ func (r *Reader) Read() error {
 		return errors.New("directory does not exist")
 	}
 
+	// Create the channel
+	workers := 3
+	r.filterChannel = make(chan session.Item, 20)
+	wg := sync.WaitGroup{}
+	wg.Add(workers)
+	for i := 0; i < workers; i++ {
+		go func() {
+			for fi := range r.filterChannel {
+				log.Debugf("Filtering item: %s", fi.Path)
+
+				// Do filter
+
+				r.activeSession.Add(fi)
+			}
+
+			wg.Done()
+		}()
+	}
+
 	filepath.Walk(r.dir, r.visit)
+	close(r.filterChannel)
+	log.Debugf("Done reading directory: %s", r.dir)
+
+	wg.Wait()
+	log.Debugf("All filtering is complete.")
 
 	return nil
 }
@@ -69,7 +95,7 @@ func (r *Reader) visit(path string, f os.FileInfo, err error) error {
 		Info: f,
 	}
 
-	r.activeSession.Add(item)
+	r.filterChannel <- item
 
 	return nil
 }
