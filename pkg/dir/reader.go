@@ -25,6 +25,10 @@ import (
 	"sync"
 )
 
+const (
+	DefaultMaxDepth = 1
+)
+
 type Reader struct {
 	dir           string
 	maxDepth      int
@@ -35,11 +39,18 @@ type Reader struct {
 func CreateReader(dir string, s *session.Session) *Reader {
 	r := Reader{
 		dir:           dir,
-		maxDepth:      1,
+		maxDepth:      DefaultMaxDepth,
 		activeSession: s,
 	}
 
 	return &r
+}
+
+func (r *Reader) SetDepth(depth int) {
+	if depth < 1 {
+		depth = DefaultMaxDepth
+	}
+	r.maxDepth = depth
 }
 
 func (r *Reader) Read() error {
@@ -48,6 +59,7 @@ func (r *Reader) Read() error {
 		return errors.New("directory does not exist")
 	}
 
+	log.Debugf("Reading directory: %s", r.dir)
 	// Create the channel
 	workers := 3
 	r.filterChannel = make(chan session.Item, 20)
