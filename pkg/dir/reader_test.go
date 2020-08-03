@@ -19,6 +19,7 @@ package dir
 import (
 	"github.com/apex/log"
 	"github.com/zpxio/fsel/pkg/session"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -66,6 +67,28 @@ func (s *DirSuite) TestRead_D255Full() {
 
 func (s *DirSuite) TestRead_NoDir() {
 	dir := testDir("unit", "pkg", "dir", "fail-001")
+	log.Infof("Testing with directory: %s", dir)
+
+	x := session.NewSession()
+	r := CreateReader(dir, x)
+
+	err := r.Read()
+
+	s.Error(err)
+}
+
+func (s *DirSuite) TestRead_WalkErr() {
+
+	dir, tempErr := ioutil.TempDir("", "test-dir-failing-")
+	s.Require().NoError(tempErr)
+	log.Infof("Created bad walk directory: %s", dir)
+
+	defer func() {
+		os.Chmod(dir, 0755)
+		os.RemoveAll(dir)
+	}()
+	os.Chmod(dir, 0000)
+
 	log.Infof("Testing with directory: %s", dir)
 
 	x := session.NewSession()

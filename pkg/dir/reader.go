@@ -79,8 +79,11 @@ func (r *Reader) Read() error {
 		}()
 	}
 
-	filepath.Walk(r.dir, r.visit)
+	walkErr := filepath.Walk(r.dir, r.visit)
 	close(r.filterChannel)
+	if walkErr != nil {
+		return walkErr
+	}
 	log.Debugf("Done reading directory: %s", r.dir)
 
 	wg.Wait()
@@ -90,6 +93,9 @@ func (r *Reader) Read() error {
 }
 
 func (r *Reader) visit(path string, f os.FileInfo, err error) error {
+	if err != nil {
+		return err
+	}
 
 	// Check the depth
 	depth := DepthFrom(r.dir, path)
