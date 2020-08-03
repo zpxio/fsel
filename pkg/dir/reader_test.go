@@ -84,10 +84,10 @@ func (s *DirSuite) TestRead_WalkErr() {
 	log.Infof("Created bad walk directory: %s", dir)
 
 	defer func() {
-		os.Chmod(dir, 0755)
-		os.RemoveAll(dir)
+		_ = os.Chmod(dir, 0755)
+		_ = os.RemoveAll(dir)
 	}()
-	os.Chmod(dir, 0000)
+	_ = os.Chmod(dir, 0000)
 
 	log.Infof("Testing with directory: %s", dir)
 
