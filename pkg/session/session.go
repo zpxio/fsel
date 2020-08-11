@@ -17,21 +17,87 @@
 package session
 
 import (
-	"os"
+	"github.com/apex/log"
+	"github.com/zpxio/fsel/pkg/actions"
+	"github.com/zpxio/fsel/pkg/core"
+	"sort"
 )
 
+const MaxBuffer = 2048
+
+var DefaultActions []Action
+
+func init() {
+	DefaultActions = make([]Action, 0)
+
+	DefaultActions = append(DefaultActions, &actions.Print{})
+}
+
 type Session struct {
-	Files map[string]os.FileInfo
+	Files   map[string]core.Item
+	Actions []Action
 }
 
 func NewSession() *Session {
 	s := Session{
-		Files: make(map[string]os.FileInfo),
+		Files:   make(map[string]core.Item),
+		Actions: make([]Action, 0),
 	}
 
 	return &s
 }
 
-func (s *Session) Add(item Item) {
-	s.Files[item.Path] = item.Info
+func (s *Session) Add(item core.Item) {
+	s.Files[item.Path] = item
+}
+
+func (s *Session) AddAction(action Action) {
+	s.Actions = append(s.Actions, action)
+}
+
+func (s *Session) effectiveActions() []Action {
+	if len(s.Actions) < 1 {
+		return DefaultActions
+	} else {
+		return s.Actions
+	}
+}
+
+func (s *Session) RunActions() {
+	bufferSize := MaxBuffer
+
+	for _, a := range s.effectiveActions() {
+		if a.BatchSize() < bufferSize {
+			bufferSize = a.BatchSize()
+		}
+	}
+
+	// Get a sorted list of files
+	items := make([]*core.Item, len(s.Files))
+	i := 0
+	for path := range s.Files {
+		item := s.Files[path]
+		items[i] = &item
+		i++
+	}
+
+	// Sort the items
+	sort.Slice(items, func(a int, b int) bool {
+		return items[a].Path < items[b].Path
+	})
+
+	// Run all the actions
+	for start := 0; start < len(s.Files); start += bufferSize {
+		for _, a := range s.effectiveActions() {
+			bufferEnd := start + bufferSize
+			if bufferEnd > len(items) {
+				bufferEnd = len(items)
+			}
+			err := a.Run(items[start:bufferEnd])
+			if err != nil {
+				log.Errorf("Action [%s] failed: %s", a.Name(), err)
+				break
+			}
+		}
+	}
 }

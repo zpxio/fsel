@@ -14,11 +14,31 @@
  * limitations under the License.
  */
 
-package session
+package actions
 
-import "os"
+import (
+	"fmt"
+	"github.com/apex/log"
+	"github.com/zpxio/fsel/pkg/core"
+)
 
-type Item struct {
-	Path string
-	Info os.FileInfo
+type Print struct {
+}
+
+func (a *Print) Name() string {
+	return "Print"
+}
+
+func (a *Print) BatchSize() int {
+	return 2048
+}
+
+func (a *Print) Run(items []*core.Item) error {
+
+	log.Infof("Printing batch of %d", len(items))
+	for _, i := range items {
+		fmt.Printf("%s\n", i.Path)
+	}
+
+	return nil
 }

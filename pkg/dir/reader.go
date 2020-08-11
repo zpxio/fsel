@@ -19,6 +19,7 @@ package dir
 import (
 	"errors"
 	"github.com/apex/log"
+	"github.com/zpxio/fsel/pkg/core"
 	"github.com/zpxio/fsel/pkg/session"
 	"os"
 	"path/filepath"
@@ -33,7 +34,7 @@ type Reader struct {
 	dir           string
 	maxDepth      int
 	activeSession *session.Session
-	filterChannel chan session.Item
+	filterChannel chan core.Item
 }
 
 func CreateReader(dir string, s *session.Session) *Reader {
@@ -62,7 +63,7 @@ func (r *Reader) Read() error {
 	log.Debugf("Reading directory: %s", r.dir)
 	// Create the channel
 	workers := 3
-	r.filterChannel = make(chan session.Item, 20)
+	r.filterChannel = make(chan core.Item, 20)
 	wg := sync.WaitGroup{}
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
@@ -108,7 +109,7 @@ func (r *Reader) visit(path string, f os.FileInfo, err error) error {
 		return nil
 	}
 
-	item := session.Item{
+	item := core.Item{
 		Path: path,
 		Info: f,
 	}

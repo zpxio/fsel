@@ -14,28 +14,12 @@
  * limitations under the License.
  */
 
-package main
+package session
 
-import (
-	"github.com/apex/log"
-	"github.com/zpxio/fsel/pkg/dir"
-	"github.com/zpxio/fsel/pkg/session"
-	"os"
-)
+import "github.com/zpxio/fsel/pkg/core"
 
-func main() {
-	log.Infof("Starting up.")
-
-	log.Debugf("Creating Session")
-	s := session.NewSession()
-
-	cwd, _ := os.Getwd()
-	log.Infof("Reading directory: %s", cwd)
-	r := dir.CreateReader(cwd, s)
-	err := r.Read()
-	if err != nil {
-		log.Errorf("Error adding files: %s", err)
-	}
-
-	s.RunActions()
+type Action interface {
+	BatchSize() int
+	Run([]*core.Item) error
+	Name() string
 }
